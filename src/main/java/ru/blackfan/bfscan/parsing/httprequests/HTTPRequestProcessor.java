@@ -18,10 +18,8 @@ import jadx.api.plugins.input.data.ILocalVar;
 import jadx.core.dex.instructions.args.CodeVar;
 import jadx.core.dex.instructions.args.RegisterArg;
 import jadx.core.dex.instructions.args.SSAVar;
-import jadx.core.dex.nodes.ClassNode;
 import jadx.core.dex.nodes.MethodNode;
 import jadx.core.dex.nodes.RootNode;
-import jadx.core.utils.exceptions.DecodeException;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.util.ArrayList;
@@ -33,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.blackfan.bfscan.config.ConfigLoader;
 import ru.blackfan.bfscan.config.ProcessorConfig;
-import ru.blackfan.bfscan.helpers.Helpers;
 import ru.blackfan.bfscan.parsing.httprequests.processors.AnnotationProcessor;
 import ru.blackfan.bfscan.parsing.httprequests.processors.AnnotationProcessorFactory;
 import ru.blackfan.bfscan.parsing.httprequests.processors.AnnotationUtils;
@@ -239,16 +236,7 @@ public class HTTPRequestProcessor {
 
     private void processMethodParameters(MultiHTTPRequest request, MethodNode mn, RootNode rn) {
         AnnotationMethodParamsAttr paramsAnnotations = mn.get(JadxAttrType.ANNOTATION_MTH_PARAMETERS);
-        try {
-            mn.load();
-            if ((mn.getInstructions() == null) && mn.getInsnsCount() != 0) {
-                mn.reload();
-            }
-        } catch (DecodeException e) {
-            logger.error("Failed to load method " + mn.getName(), e);
-            return;
-        }
-
+        AnnotationUtils.loadMethodNode(mn);
         List<ILocalVar> localVars = getLocalVars(mn);
         processMethodArgs(request, mn, rn, paramsAnnotations, localVars);
     }

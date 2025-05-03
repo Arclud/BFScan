@@ -49,7 +49,8 @@ class HTTPRequest {
     public ru.blackfan.bfscan.parsing.httprequests.requestbody.RequestBody requestBody;
     public Map<String, Object> cookieParameters;
     public String encType; // json,xml,multipart,form
-    public final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    public final Gson gsonPretty = new GsonBuilder().setPrettyPrinting().create();
+    public final Gson gsonRaw = new GsonBuilder().create();
 
     public HTTPRequest(String argHost, String argBasePath) {
         method = "GET";
@@ -342,7 +343,7 @@ class HTTPRequest {
                             if(entry.getValue() instanceof String) {
                                 out += entry.getKey() + "=" + entry.getValue() + "&";
                             } else {
-                                out += entry.getKey() + "=" + gson.toJson(entry.getValue()) + "&";
+                                out += entry.getKey() + "=" + gsonRaw.toJson(entry.getValue()) + "&";
                             }
                         }
                         out = out.substring(0, out.length() - 1);
@@ -391,9 +392,9 @@ class HTTPRequest {
                 out += CRLF;
                 if (requestBody != null) {
                     if (requestBody.getType() == Type.OBJECT) {
-                        out += gson.toJson((HashMap<String, Object>) requestBody.getBody());
+                        out += gsonPretty.toJson((HashMap<String, Object>) requestBody.getBody());
                     } else if (requestBody.getBody() != null && requestBody.getType() == Type.PRIMITIVE) {
-                        out += gson.toJson(requestBody.getBody());
+                        out += gsonPretty.toJson(requestBody.getBody());
                     } else if (requestBody.getType() == Type.RAW) {
                         out += requestBody.getBody();
                     }

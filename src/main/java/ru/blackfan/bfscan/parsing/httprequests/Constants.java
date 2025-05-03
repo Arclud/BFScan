@@ -321,6 +321,7 @@ public final class Constants {
 
         public static final String HIBERNATE_GENERIC_GENERATOR = "Lorg/hibernate/annotations/GenericGenerator;";
         public static final String JETBRAINS_NOTNULL = "Lorg/jetbrains/annotations/NotNull;";
+        public static final String JETBRAINS_NULLABLE = "Lorg/jetbrains/annotations/Nullable;";
         public static final String JAX_NOTNULL = "Ljavax/validation/constraints/NotNull;";
         public static final String JAX_SIZE = "Ljavax/validation/constraints/Size;";
         public static final String JAX_PATTERN = "Ljavax/validation/constraints/Pattern;";
@@ -342,7 +343,7 @@ public final class Constants {
         public static final List<String> IGNORE_ANNOTATIONS = Collections.unmodifiableList(
                 Arrays.asList(
                         HIBERNATE_GENERIC_GENERATOR,
-                        JETBRAINS_NOTNULL,
+                        JETBRAINS_NOTNULL, JETBRAINS_NULLABLE,
                         JAX_NOTNULL, JAX_SIZE, JAX_PATTERN, JAX_MIN, JAX_MAX, JAX_DIGITS, JAX_XML_SCHEMA_TYPE, JAX_VALID,
                         JAKARTA_NOTNULL, JAKARTA_SIZE, JAKARTA_PATTERN, JAKARTA_MIN, JAKARTA_MAX, JAKARTA_DIGITS, JAKARTA_XML_SCHEMA_TYPE, JAKARTA_VALID
                 )

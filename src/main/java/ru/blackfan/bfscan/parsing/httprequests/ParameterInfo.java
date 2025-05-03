@@ -9,6 +9,11 @@ public class ParameterInfo {
         defaultValue = "";
         name = null;
     }
+    
+    public ParameterInfo(String name, String defaultValue) {
+        this.defaultValue = defaultValue;
+        this.name = name;
+    }
 
     public String getName() {
         return name;

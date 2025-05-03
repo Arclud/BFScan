@@ -3,12 +3,21 @@ package ru.blackfan.bfscan.parsing.httprequests.processors;
 import jadx.api.plugins.input.data.annotations.EncodedValue;
 import jadx.api.plugins.input.data.annotations.IAnnotation;
 import jadx.api.plugins.input.data.attributes.JadxAttrType;
+import jadx.api.plugins.input.data.attributes.types.AnnotationMethodParamsAttr;
 import jadx.api.plugins.input.data.attributes.types.AnnotationsAttr;
 import jadx.api.plugins.input.data.ILocalVar;
+import jadx.core.dex.info.FieldInfo;
 import jadx.core.dex.instructions.args.ArgType;
+import jadx.core.dex.instructions.args.InsnArg;
+import jadx.core.dex.instructions.args.RegisterArg;
+import jadx.core.dex.instructions.IndexInsnNode;
+import jadx.core.dex.instructions.InsnType;
 import jadx.core.dex.nodes.ClassNode;
 import jadx.core.dex.nodes.FieldNode;
+import jadx.core.dex.nodes.InsnNode;
+import jadx.core.dex.nodes.MethodNode;
 import jadx.core.dex.nodes.RootNode;
+import jadx.core.utils.exceptions.DecodeException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
@@ -30,6 +39,17 @@ public class AnnotationUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(AnnotationUtils.class);
 
+    public static void loadMethodNode(MethodNode mn) {
+        try {
+            mn.load();
+            if ((mn.getInstructions() == null) && mn.getInsnsCount() != 0) {
+                mn.reload();
+            }
+        } catch (DecodeException e) {
+            logger.error("Failed to load method " + mn.getName(), e);
+        }
+    }
+
     public static EncodedValue getValue(Map<String, EncodedValue> values, List<String> names) {
         for (String name : names) {
             if (values.get(name) != null) {
@@ -40,14 +60,14 @@ public class AnnotationUtils {
     }
 
     public static String getParamName(EncodedValue fromAnnotation, ParameterInfo paramInfo, List<ILocalVar> localVars, int regNum) {
-        if(paramInfo != null) {
-            if(paramInfo.getName() != null) {
+        if (paramInfo != null) {
+            if (paramInfo.getName() != null) {
                 return paramInfo.getName();
             }
         }
         if (fromAnnotation != null) {
             String name = Helpers.stringWrapper(fromAnnotation);
-            if(paramInfo != null) {
+            if (paramInfo != null) {
                 paramInfo.setName(name);
             }
             return name;
@@ -203,7 +223,7 @@ public class AnnotationUtils {
         if (list == null) {
             return defaultValue;
         }
-        
+
         List<?> array;
         if (list instanceof Set) {
             array = new ArrayList<>((Set<?>) list);
@@ -212,11 +232,11 @@ public class AnnotationUtils {
         } else {
             return defaultValue;
         }
-        
+
         if (array.isEmpty()) {
             return defaultValue;
         }
-        
+
         StringBuilder result = new StringBuilder();
         boolean first = true;
         for (Object item : array) {
@@ -228,7 +248,7 @@ public class AnnotationUtils {
                 first = false;
             }
         }
-        
+
         return URLEncoder.encode(result.toString(), StandardCharsets.UTF_8);
     }
 
@@ -257,8 +277,8 @@ public class AnnotationUtils {
                 request.putBodyParameter(paramName != null ? paramName : "date", new ArrayList());
             } else {
                 Object value = argTypeToValue("value", argType, rootNode, new HashSet<>(), true);
-                if(value instanceof Map) {
-                    request.putBodyParameters((HashMap)value);
+                if (value instanceof Map) {
+                    request.putBodyParameters((HashMap) value);
                 } else {
                     logger.error("Error in processArbitraryBodyParameter " + request.getClassName() + "->" + request.getMethodName());
                 }
@@ -341,7 +361,7 @@ public class AnnotationUtils {
                     break;
                 }
             }
-            
+
             if (selectedContentType != null) {
                 request.putHeader("Content-Type", selectedContentType);
             } else {
@@ -371,7 +391,7 @@ public class AnnotationUtils {
             boolean resolveParentClass, Map<String, Object> parameters, RootNode rootNode) {
         ArgType superClass = classNode.getSuperClass();
         if (superClass != null && resolveParentClass) {
-            
+
             ClassNode superClassNode = Helpers.loadClass(rootNode, superClass.getObject());
             if (superClassNode != null) {
                 parameters.putAll((HashMap) classToRequestParameters(superClassNode,
@@ -382,9 +402,62 @@ public class AnnotationUtils {
 
     private static void processClassFields(ClassNode classNode, Set<String> processedClasses,
             boolean resolveParentClass, Map<String, Object> parameters, RootNode rootNode) {
+        Map<Integer, ParameterInfo> fromConstructorArgs = new HashMap();
+        Map<String, ParameterInfo> classFieldsFromConstructor = new HashMap();
+
+        for (MethodNode methodNode : classNode.getMethods()) {
+            if (methodNode.getName().equals("<init>")) {
+                AnnotationMethodParamsAttr paramsAnnotations = methodNode.get(JadxAttrType.ANNOTATION_MTH_PARAMETERS);
+                if (paramsAnnotations != null) {
+                    loadMethodNode(methodNode);
+
+                    List<RegisterArg> methodArgs = methodNode.getArgRegs();
+                    int annNum = 0;
+                    for (RegisterArg mthArg : methodArgs) {
+                        List<AnnotationsAttr> paramList = paramsAnnotations.getParamList();
+                        AnnotationsAttr argAnnList = paramList.get(annNum++);
+
+                        String fieldName = null;
+                        String defaultValue = null;
+
+                        if (argAnnList != null && !argAnnList.isEmpty()) {
+                            FieldAnnotationProcessor processor = new FieldAnnotationProcessor(classNode.root());
+                            processor.process(argAnnList, fieldName, defaultValue);
+                            fieldName = processor.getFieldName();
+                            defaultValue = processor.getDefaultValue();
+
+                            if (fieldName != null) {
+                                fromConstructorArgs.put(mthArg.getRegNum(), new ParameterInfo(fieldName, defaultValue));
+                            }
+                        }
+                    }
+
+                    InsnNode[] instructions = methodNode.getInstructions();
+                    if (instructions != null) {
+                        for (InsnNode insn : instructions) {
+                            if (insn instanceof IndexInsnNode indexInsn) {
+                                if (indexInsn.getType() == InsnType.IPUT) {
+                                    List<InsnArg> argList = indexInsn.getArgList();
+                                    if (argList.size() == 2) {
+                                        if (argList.get(0) instanceof RegisterArg registerArg && indexInsn.getIndex() instanceof FieldInfo fieldInfo) {
+                                            if (fromConstructorArgs.containsKey(registerArg.getRegNum())) {
+                                                classFieldsFromConstructor.put(fieldInfo.getAlias(), fromConstructorArgs.get(registerArg.getRegNum()));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        logger.debug("No instructions found for method: {}", methodNode.getName());
+                    }
+                }
+            }
+        }
+
         for (FieldNode field : classNode.getFields()) {
             if (isProcessableField(field)) {
-                processField(field, classNode, processedClasses, resolveParentClass, parameters);
+                processField(field, classNode, processedClasses, resolveParentClass, parameters, classFieldsFromConstructor);
             }
         }
     }
@@ -398,9 +471,16 @@ public class AnnotationUtils {
     private static void processField(FieldNode field, ClassNode classNode,
             Set<String> processedClasses,
             boolean resolveParentClass,
-            Map<String, Object> parameters) {
+            Map<String, Object> parameters,
+            Map<String, ParameterInfo> classFieldsFromConstructor) {
         String fieldName = field.getAlias();
         String defaultValue = null;
+
+        if (classFieldsFromConstructor.containsKey(fieldName)) {
+            ParameterInfo fromConstructor = classFieldsFromConstructor.get(fieldName);
+            fieldName = fromConstructor.getName();
+            defaultValue = fromConstructor.getDefaultValue();
+        }
 
         AnnotationsAttr aList = field.get(JadxAttrType.ANNOTATION_LIST);
         if (aList != null && !aList.isEmpty()) {
