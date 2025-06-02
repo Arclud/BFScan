@@ -1,6 +1,6 @@
 ## BFScan
 
-Tool for initial processing of APK / XAPK / DEX / JAR / WAR applications.
+Tool for initial processing of APK / XAPK / APKM / DEX / JAR / WAR applications.
 
 * Search for strings in source code and resources that look like URIs, paths, or secrets
 * Generate raw HTTP requests and OpenAPI specifications based on config files, class and method annotations
