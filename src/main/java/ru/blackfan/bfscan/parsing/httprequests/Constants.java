@@ -161,6 +161,7 @@ public final class Constants {
         public static final String PARAM_FIELD = "Lretrofit2/http/Field;";
         public static final String PARAM_BODY = "Lretrofit2/http/Body;";
         public static final String PARAM_QUERY = "Lretrofit2/http/Query;";
+        public static final String PARAM_QUERYMAP = "Lretrofit2/http/QueryMap;";
         public static final String PARAM_PATH = "Lretrofit2/http/Path;";
 
         public static final List<String> REQUEST_METHODS = Collections.unmodifiableList(Arrays.asList(
@@ -189,6 +190,7 @@ public final class Constants {
         public static final String PARAM_FIELD = "Lde/jensklingenberg/ktorfit/http/Field;";
         public static final String PARAM_BODY = "Lde/jensklingenberg/ktorfit/http/Body;";
         public static final String PARAM_QUERY = "Lde/jensklingenberg/ktorfit/http/Query;";
+        public static final String PARAM_QUERYMAP = "Lde/jensklingenberg/ktorfit/http/QueryMap;";
         public static final String PARAM_PATH = "Lde/jensklingenberg/ktorfit/http/Path;";
 
         public static final List<String> REQUEST_METHODS = Collections.unmodifiableList(Arrays.asList(

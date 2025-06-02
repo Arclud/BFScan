@@ -15,6 +15,7 @@ import jadx.api.plugins.input.data.attributes.types.AnnotationMethodParamsAttr;
 import jadx.api.plugins.input.data.attributes.types.AnnotationsAttr;
 import jadx.api.plugins.input.data.IDebugInfo;
 import jadx.api.plugins.input.data.ILocalVar;
+import jadx.core.dex.instructions.args.ArgType;
 import jadx.core.dex.instructions.args.CodeVar;
 import jadx.core.dex.instructions.args.RegisterArg;
 import jadx.core.dex.instructions.args.SSAVar;
@@ -35,6 +36,7 @@ import ru.blackfan.bfscan.parsing.httprequests.processors.AnnotationProcessor;
 import ru.blackfan.bfscan.parsing.httprequests.processors.AnnotationProcessorFactory;
 import ru.blackfan.bfscan.parsing.httprequests.processors.AnnotationUtils;
 import ru.blackfan.bfscan.parsing.httprequests.processors.ArgProcessingState;
+import ru.blackfan.bfscan.parsing.httprequests.processors.GeneralTypesConstants;
 import ru.blackfan.bfscan.parsing.httprequests.processors.MinifiedProcessor;
 
 public class HTTPRequestProcessor {
@@ -288,19 +290,19 @@ public class HTTPRequestProcessor {
 
         ParameterInfo paramInfo = new ParameterInfo();
         ArgProcessingState state = ArgProcessingState.NOT_PROCESSED;
-        Map<String,Map<String, EncodedValue>> minifiedAnnotations = new HashMap();
+        Map<String, Map<String, EncodedValue>> minifiedAnnotations = new HashMap();
 
         for (IAnnotation annotation : argAnnList.getAll()) {
             String aCls = AnnotationUtils.getAnnotationClass(annotation, rootNode);
             Map<String, EncodedValue> annotationValues = annotation.getValues();
-            
+
             ArgProcessingState currentAnnotationState = ArgProcessingState.NOT_PROCESSED;
             for (AnnotationProcessor processor : AnnotationProcessorFactory.getProcessors()) {
                 try {
                     ArgProcessingState currentProcessorState = processor.processParameterAnnotations(request, paramInfo, aCls, annotationValues, localVars, regNum, var.getType(), rootNode);
-                    if(currentProcessorState != ArgProcessingState.NOT_PROCESSED) {
+                    if (currentProcessorState != ArgProcessingState.NOT_PROCESSED) {
                         currentAnnotationState = currentProcessorState;
-                        if(state != ArgProcessingState.PARAMETER_CREATED) {
+                        if (state != ArgProcessingState.PARAMETER_CREATED) {
                             state = currentProcessorState;
                         }
                     }
@@ -312,31 +314,41 @@ public class HTTPRequestProcessor {
                 minifiedAnnotations.put(aCls, annotationValues);
             }
         }
-        if(state != ArgProcessingState.PARAMETER_CREATED) {
+        if (state != ArgProcessingState.PARAMETER_CREATED) {
             for (Map.Entry<String, Map<String, EncodedValue>> entry : minifiedAnnotations.entrySet()) {
                 ArgProcessingState currentState = MinifiedProcessor.processParameterAnnotations(request, paramInfo, entry.getKey(), entry.getValue(), localVars, regNum, var.getType(), rootNode);
-                if(currentState == ArgProcessingState.PARAMETER_CREATED) {
+                if (currentState == ArgProcessingState.PARAMETER_CREATED) {
                     state = currentState;
                     break;
                 }
-            } 
+            }
         }
-        if(state != ArgProcessingState.PARAMETER_CREATED) {
+        if (state != ArgProcessingState.PARAMETER_CREATED) {
             processUnannotatedArg(request, var, localVars, regNum, rootNode);
         }
     }
 
     private void processUnannotatedArg(MultiHTTPRequest request, CodeVar var, List<ILocalVar> localVars, int regNum, RootNode rootNode) {
-        if (AnnotationUtils.isSimpleObject(var.getType())) {
+        ArgType argType = var.getType();
+        if (AnnotationUtils.isSimpleObject(argType)) {
             String paramName = AnnotationUtils.getParamName(null, null, localVars, regNum);
-            AnnotationUtils.processQueryParameter(request, paramName, "", var.getType(), rootNode);
-        } else {
-            if (!var.getType().isPrimitive() && var.getType() != null) {
-                try {
-                    request.putBodyParameters((Map) AnnotationUtils.argTypeToValue("value", var.getType(), rootNode, new HashSet<>(), true));
-                } catch (Exception ex) {
-                    logger.error("Error in processUnannotatedArg: " + request.getClassName() + "->" + request.getMethodName());
+            AnnotationUtils.processQueryParameter(request, paramName, "", argType, rootNode);
+            return;
+        } else if (argType != null && argType.getObject().equals(GeneralTypesConstants.JAVA_MAP)) {
+            if ((argType.getGenericTypes() != null) && !argType.getGenericTypes().isEmpty() && (argType.getGenericTypes().size() == 2)) {
+                ArgType keyArg = argType.getGenericTypes().get(0);
+                ArgType valueArg = argType.getGenericTypes().get(1);
+                if (keyArg.getObject().equals(GeneralTypesConstants.JAVA_STRING) && valueArg.getObject().equals(GeneralTypesConstants.JAVA_STRING)) {
+                    AnnotationUtils.processQueryParameter(request, "key", "value", argType, rootNode);
+                    return;
                 }
+            }
+        }
+        if (argType != null && !argType.isPrimitive()) {
+            try {
+                request.putBodyParameters((Map) AnnotationUtils.argTypeToValue("value", argType, rootNode, new HashSet<>(), true));
+            } catch (Exception ex) {
+                logger.error("Error in processUnannotatedArg: " + request.getClassName() + "->" + request.getMethodName());
             }
         }
     }
