@@ -13,7 +13,8 @@ public class JadxBasePluginLoader implements JadxPluginLoader {
         List<JadxPlugin> list = new ArrayList<>();
         list.add(new jadx.plugins.input.dex.DexInputPlugin());
         list.add(new jadx.plugins.input.java.JavaInputPlugin());
-        list.add(new jadx.plugins.input.xapk.XapkInputPlugin());
+        list.add(new jadx.plugins.input.xapk.XApkInputPlugin());
+        list.add(new jadx.plugins.input.apkm.ApkmInputPlugin());
         list.add(new jadx.plugins.kotlin.metadata.KotlinMetadataPlugin());
         list.add(new jadx.plugins.mappings.RenameMappingsPlugin());
         return list;

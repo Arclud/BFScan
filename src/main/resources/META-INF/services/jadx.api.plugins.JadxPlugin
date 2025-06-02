@@ -1,5 +1,6 @@
 jadx.plugins.input.dex.DexInputPlugin
 jadx.plugins.input.java.JavaInputPlugin
 jadx.plugins.input.xapk.XapkInputPlugin
+jadx.plugins.input.apkm.ApkmInputPlugin
 jadx.plugins.kotlin.metadata.KotlinMetadataPlugin
 jadx.plugins.mappings.RenameMappingsPlugin
