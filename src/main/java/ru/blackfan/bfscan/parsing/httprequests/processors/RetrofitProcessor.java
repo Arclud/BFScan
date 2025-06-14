@@ -61,9 +61,6 @@ public class RetrofitProcessor implements AnnotationProcessor {
                 return ArgProcessingState.PARAMETER_CREATED;
             }
             case Constants.Retrofit.PARAM_QUERYMAP, Constants.Ktorfit.PARAM_QUERYMAP -> {
-                /*String paramName = AnnotationUtils.getParamName(null, paramInfo, localVars, methodArg);
-                AnnotationUtils.processArbitraryBodyParameter(request, paramName, argType, rootNode);
-                return ArgProcessingState.PARAMETER_CREATED;*/
                 return ArgProcessingState.PROCESSED_NO_PARAMETER;
             }
             default -> {

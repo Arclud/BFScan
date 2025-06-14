@@ -155,7 +155,7 @@ public class Main {
         CommandLine commandLine = parser.parse(options, args);
         List<String> cliArgs = commandLine.getArgList();
         if (cliArgs.isEmpty()) {
-            throw new ParseException("Specify at least one input file (APK, XAPK, JAR, WAR or DEX)");
+            throw new ParseException("Specify at least one input file (APK, APKM, XAPK, JAR, WAR or DEX)");
         }
 
         List<File> inputFiles = new ArrayList<>();
@@ -236,7 +236,7 @@ public class Main {
             throw new IllegalArgumentException("Cannot read file: " + file.getPath());
         }
         String ext = Helpers.getFileExtension(file);
-        if (!Arrays.asList("apk", "xapk", "jar", "war", "dex", "zip").contains(ext.toLowerCase())) {
+        if (!Arrays.asList("apk", "apkm", "xapk", "jar", "war", "dex", "zip").contains(ext.toLowerCase())) {
             throw new IllegalArgumentException("Unsupported file type: " + ext);
         }
     }
@@ -244,7 +244,7 @@ public class Main {
     private static void handleError(String message, Throwable error, HelpFormatter formatter, Options options) {
         logger.error(message, error);
         formatter.setWidth(200);
-        formatter.printHelp("java -jar bfscan.jar <jar_war_dex_apk_xapk_path> <...>", options, true);
+        formatter.printHelp("java -jar bfscan.jar <jar_war_dex_apk_apkm_xapk_path> <...>", options, true);
         System.exit(1);
     }
 
