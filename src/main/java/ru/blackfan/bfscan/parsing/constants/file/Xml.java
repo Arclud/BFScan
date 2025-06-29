@@ -26,7 +26,7 @@ public class Xml {
             Document document = builder.parse(inputSource);
             processElement(document.getDocumentElement(), keyValuePairs);
         } catch (Exception e) {
-            logger.error("Error processing XML file: " + fileName, e);
+            logger.error("Error processing XML file {}: {}", fileName, e.getMessage());
             throw e;
         }
         return keyValuePairs;

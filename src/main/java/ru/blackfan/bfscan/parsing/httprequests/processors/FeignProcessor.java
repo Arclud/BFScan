@@ -29,8 +29,12 @@ public class FeignProcessor implements AnnotationProcessor {
             ArgType var,
             RootNode rn) {
         switch (annotationClass) {
-            case Constants.Feign.QUERYMAP, Constants.Feign.HEADERMAP, Constants.Feign.PARAM -> {
+            case Constants.Feign.QUERYMAP, Constants.Feign.PARAM -> {
                 return ArgProcessingState.PROCESSED_NO_PARAMETER;
+            }
+            case Constants.Feign.HEADERMAP -> {
+                AnnotationUtils.processHeader(request, "HeaderName", "HeaderValue");
+                return ArgProcessingState.PARAMETER_CREATED;
             }
             default -> {
                 return ArgProcessingState.NOT_PROCESSED;
@@ -90,7 +94,8 @@ public class FeignProcessor implements AnnotationProcessor {
     public boolean processClassAnnotations(MultiHTTPRequest request,
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
-            String globalBasePath) {
+            String globalBasePath,
+            RootNode rn) {
         switch (annotationClass) {
             case Constants.Feign.CLIENT -> {
                 request.addAdditionalInformation("Feign Client");

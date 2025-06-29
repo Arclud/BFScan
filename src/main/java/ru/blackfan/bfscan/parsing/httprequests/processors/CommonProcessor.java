@@ -40,7 +40,8 @@ public class CommonProcessor implements AnnotationProcessor {
     public boolean processClassAnnotations(MultiHTTPRequest request,
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
-            String globalBasePath
+            String globalBasePath,
+            RootNode rn
     ) {
         return false;
     }

@@ -11,6 +11,7 @@ import ru.blackfan.bfscan.helpers.Helpers;
 import ru.blackfan.bfscan.parsing.httprequests.Constants;
 import ru.blackfan.bfscan.parsing.httprequests.MultiHTTPRequest;
 import ru.blackfan.bfscan.parsing.httprequests.ParameterInfo;
+import ru.blackfan.bfscan.parsing.httprequests.ResourceProcessor;
 
 public class JaxJakartaProcessor implements AnnotationProcessor {
 
@@ -121,7 +122,8 @@ public class JaxJakartaProcessor implements AnnotationProcessor {
     public boolean processClassAnnotations(MultiHTTPRequest request,
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
-            String globalBasePath) {
+            String globalBasePath,
+            RootNode rn) {
         switch (annotationClass) {
             case Constants.JaxRs.PATH, Constants.Jakarta.PATH -> {
                 EncodedValue value = AnnotationUtils.getValue(annotationValues, List.of("value", "a"));
@@ -143,6 +145,10 @@ public class JaxJakartaProcessor implements AnnotationProcessor {
                         paths.add(classPath);
                     }
                     request.setPaths(paths);
+                    List<String> httpMethods = AnnotationUtils.extractHttpMethodsFromServletClass(rn, Helpers.classSigToRawFullName(annotationClass));
+                    if (!httpMethods.isEmpty()) {
+                        request.setMethods(httpMethods);
+                    }
                 }
                 return true;
             }

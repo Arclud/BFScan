@@ -30,7 +30,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 import ru.blackfan.bfscan.helpers.Helpers;
 import ru.blackfan.bfscan.parsing.httprequests.processors.AnnotationUtils;
 
@@ -63,18 +62,26 @@ public class ResourceProcessor {
         List<MultiHTTPRequest> multiRequests = new ArrayList();
         for (ResourceFile resFile : jadx.getResources()) {
             ResContainer resContainer = resFile.loadContent();
-            if (resContainer.getDataType() == ResContainer.DataType.RES_LINK) {
-                try {
-                    ResourcesLoader.decodeStream(resContainer.getResLink(), (size, is) -> {
+            ResContainer.DataType dataType = resContainer.getDataType();
+
+            try {
+                if (dataType == ResContainer.DataType.RES_LINK) {
+                    ResourcesLoader.decodeStream(resFile, (size, is) -> {
                         multiRequests.addAll(processFile(resFile.getDeobfName(), is));
                         return null;
                     });
-                } catch (JadxException ex) {
-                    logger.error("Error processing file " + resFile.getDeobfName(), ex);
                 }
-            }
-            if (resContainer.getDataType() == ResContainer.DataType.TEXT) {
-                multiRequests.addAll(processFile(resFile.getDeobfName(), new ByteArrayInputStream(resContainer.getText().getCodeStr().getBytes(StandardCharsets.UTF_8))));
+                if (dataType == ResContainer.DataType.TEXT) {
+                    if (resContainer.getText().getCodeStr().length() != 0) {
+                        multiRequests.addAll(processFile(resFile.getDeobfName(), new ByteArrayInputStream(resContainer.getText().getCodeStr().getBytes(StandardCharsets.UTF_8))));
+                    } else {
+                        if (resFile.getZipEntry() != null) {
+                            multiRequests.addAll(processFile(resFile.getDeobfName(), new ByteArrayInputStream(resFile.getZipEntry().getBytes())));
+                        }
+                    }
+                }
+            } catch (JadxException ex) {
+                logger.error("Error processing file " + resFile.getDeobfName(), ex);
             }
         }
         return multiRequests;
@@ -122,8 +129,8 @@ public class ResourceProcessor {
     private List<MultiHTTPRequest> processXml(String name, InputStream is) {
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
-            InputSource inputSource = new InputSource(is);
-            Document document = builder.parse(inputSource);
+            //InputSource inputSource = new InputSource(is);
+            Document document = builder.parse(is);
             Element root = document.getDocumentElement();
 
             String rootTagName = root.getTagName();
@@ -182,6 +189,14 @@ public class ResourceProcessor {
                     MultiHTTPRequest webXmlRequest = new MultiHTTPRequest(apiHost, apiBasePath, servletClass, name);
                     webXmlRequest.addAdditionalInformation("web.xml Servlet");
                     webXmlRequest.setPath(urlPattern, false);
+
+                    if (!servletClass.equals("UNKNOWN")) {
+                        List<String> httpMethods = AnnotationUtils.extractHttpMethodsFromServletClass(jadx.getRoot(), servletClass);
+                        if (!httpMethods.isEmpty()) {
+                            webXmlRequest.setMethods(httpMethods);
+                        }
+                    }
+
                     multiRequests.add(webXmlRequest);
                 }
             }

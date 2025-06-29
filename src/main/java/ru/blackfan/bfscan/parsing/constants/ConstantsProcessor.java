@@ -142,17 +142,17 @@ public class ConstantsProcessor {
             }
             case "zip", "jar" -> {
                 try (ZipFile zip = Helpers.inputSteamToZipFile(is)) {
-                    List<ZipEntry> entries = (List<ZipEntry>)Collections.list(zip.entries());
+                    List<ZipEntry> entries = (List<ZipEntry>) Collections.list(zip.entries());
 
                     entries.parallelStream()
-                        .filter(entry -> !entry.isDirectory())
-                        .forEach(entry -> {
-                            try (InputStream zipEntryIs = zip.getInputStream(entry)) {
-                                processFile(name + "#" + entry.getName(), zipEntryIs, searchString);
-                            } catch (IOException ex) {
-                                logger.error("Error processing ZIP entry: {} in {}", entry.getName(), name, ex);
-                            }
-                        });
+                            .filter(entry -> !entry.isDirectory())
+                            .forEach(entry -> {
+                                try (InputStream zipEntryIs = zip.getInputStream(entry)) {
+                                    processFile(name + "#" + entry.getName(), zipEntryIs, searchString);
+                                } catch (IOException ex) {
+                                    logger.error("Error processing ZIP entry: {} in {}", entry.getName(), name, ex);
+                                }
+                            });
                 } catch (IOException ex) {
                     logger.error("Error processing file " + name, ex);
                 }
@@ -194,27 +194,37 @@ public class ConstantsProcessor {
 
             AtomicReference<Set<KeyValuePair>> keyValuePairs = new AtomicReference<>();
             ResContainer resContainer = resFile.loadContent();
+            ResContainer.DataType dataType = resContainer.getDataType();
 
-            if (resContainer.getDataType() == ResContainer.DataType.RES_LINK) {
-                try {
+            try {
+                if (dataType == ResContainer.DataType.RES_LINK) {
                     ResourcesLoader.decodeStream(resContainer.getResLink(), (size, is) -> {
                         keyValuePairs.set(processFile(resFile.getDeobfName(), is, searchString));
                         return null;
                     });
-                } catch (JadxException ex) {
-                    logger.error("Error processing file " + resFile.getDeobfName(), ex);
                 }
-            }
 
-            if (resContainer.getDataType() == ResContainer.DataType.TEXT) {
-                keyValuePairs.set(processFile(
-                        resFile.getDeobfName(),
-                        new ByteArrayInputStream(resContainer.getText().getCodeStr().getBytes(StandardCharsets.UTF_8)),
-                        searchString));
-            }
+                if (dataType == ResContainer.DataType.TEXT) {
+                    if (resContainer.getText().getCodeStr().length() != 0) {
+                        keyValuePairs.set(processFile(
+                                resFile.getDeobfName(),
+                                new ByteArrayInputStream(resContainer.getText().getCodeStr().getBytes(StandardCharsets.UTF_8)),
+                                searchString));
+                    } else {
+                        if (resFile.getZipEntry() != null) {
+                            keyValuePairs.set(processFile(
+                                        resFile.getDeobfName(), 
+                                        new ByteArrayInputStream(resFile.getZipEntry().getBytes()), 
+                                        searchString));
+                        }
+                    }
+                }
 
-            if (resFile.getType() == ResourceType.ARSC) {
-                keyValuePairs.set(ApkResources.process(resContainer, this.factory));
+                if (resFile.getType() == ResourceType.ARSC) {
+                    keyValuePairs.set(ApkResources.process(resContainer, this.factory));
+                }
+            } catch (JadxException ex) {
+                logger.error("Error processing file " + resFile.getDeobfName(), ex);
             }
 
             checkConstants(resFile.getDeobfName(), keyValuePairs.get(), searchString);

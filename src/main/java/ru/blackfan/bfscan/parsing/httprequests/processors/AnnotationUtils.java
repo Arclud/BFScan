@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -504,5 +505,46 @@ public class AnnotationUtils {
             return aClsAlias;
         }
         return ann.getAnnotationClass();
+    }
+    
+    private static final Map<String, String> SERVLET_METHOD_TO_HTTP = Map.of(
+            "doGet", "GET",
+            "doPost", "POST",
+            "doPut", "PUT",
+            "doDelete", "DELETE",
+            "doHead", "HEAD",
+            "doOptions", "OPTIONS",
+            "doTrace", "TRACE"
+    );
+
+    public static List<String> extractHttpMethodsFromServletClass(RootNode rn, String servletClass) {
+        Set<String> httpMethods = new LinkedHashSet<>();
+
+        try {
+            ClassNode classNode = Helpers.loadClass(rn, servletClass);
+            if (classNode == null) {
+                logger.debug("Could not load servlet class: {}, using default GET method", servletClass);
+                return List.of("GET");
+            }
+
+            classNode.getMethods()
+                    .stream()
+                    .map(MethodNode::getName)
+                    .filter(SERVLET_METHOD_TO_HTTP::containsKey)
+                    .forEach(methodName -> httpMethods.add(SERVLET_METHOD_TO_HTTP.get(methodName)));
+
+            logger.debug("Extracted HTTP methods {} from servlet class {}", httpMethods, servletClass);
+
+        } catch (Exception ex) {
+            logger.error("Error extracting HTTP methods from servlet class: {}, using default GET method", servletClass, ex);
+            return List.of("GET");
+        }
+
+        if (httpMethods.isEmpty()) {
+            logger.debug("No servlet methods found in class: {}, using default GET method", servletClass);
+            return List.of("GET");
+        }
+
+        return new ArrayList<>(httpMethods);
     }
 }

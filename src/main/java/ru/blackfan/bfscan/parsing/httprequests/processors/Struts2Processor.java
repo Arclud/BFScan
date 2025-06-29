@@ -72,7 +72,8 @@ public class Struts2Processor implements AnnotationProcessor {
     public boolean processClassAnnotations(MultiHTTPRequest request,
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
-            String globalBasePath
+            String globalBasePath,
+            RootNode rn
     ) {
         switch (annotationClass) {
             case Constants.Struts.NAMESPACE -> {

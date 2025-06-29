@@ -90,6 +90,11 @@ public class Main {
                 PrintWriter writerUrlsPaths = new PrintWriter(new FileWriter(reportUrlsPaths));
                 ConstantsProcessor constantsProcessor = new ConstantsProcessor(jadx, writerUrlsPaths, writerSecrets, writerSearch);
                 constantsProcessor.processConstants(cmdResult.searchString);
+                writerSecrets.close();
+                writerUrlsPaths.close();
+                if (writerSearch != null) {
+                    writerSearch.close();
+                }
                 logger.info("URLs saved to: " + reportUrlsPaths);
                 logger.info("Secrets saved to: " + reportSecrets);
             }
@@ -99,6 +104,8 @@ public class Main {
                 PrintWriter writerOpenApi = new PrintWriter(new FileWriter(reportOpenApi));
                 HTTPRequestProcessor processor = new HTTPRequestProcessor(jadx, cmdResult.apiUrl, cmdResult.minifiedAnnotationsSupport, writerMethods, writerOpenApi);
                 processor.processHttpMethods();
+                writerMethods.close();
+                writerOpenApi.close();
                 logger.info("Raw http methods saved to: " + reportMethods);
                 logger.info("OpenAPI spec saved to: " + reportOpenApi);
             }

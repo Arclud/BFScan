@@ -63,6 +63,10 @@ public class RetrofitProcessor implements AnnotationProcessor {
             case Constants.Retrofit.PARAM_QUERYMAP, Constants.Ktorfit.PARAM_QUERYMAP -> {
                 return ArgProcessingState.PROCESSED_NO_PARAMETER;
             }
+            case Constants.Retrofit.PARAM_HEADERMAP, Constants.Ktorfit.PARAM_HEADERMAP -> {
+                AnnotationUtils.processHeader(request, "HeaderName", "HeaderValue");
+                return ArgProcessingState.PARAMETER_CREATED;
+            }
             default -> {
                 return ArgProcessingState.NOT_PROCESSED;
             }
@@ -129,7 +133,8 @@ public class RetrofitProcessor implements AnnotationProcessor {
     public boolean processClassAnnotations(MultiHTTPRequest request,
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
-            String globalBasePath) {
+            String globalBasePath,
+            RootNode rn) {
         return false;
     }
 }

@@ -152,7 +152,7 @@ public class HTTPRequestProcessor {
                 Map<String, EncodedValue> annotationValues = a.getValues();
 
                 for (AnnotationProcessor processor : AnnotationProcessorFactory.getProcessors()) {
-                    if (processor.processClassAnnotations(request, aCls, annotationValues, apiBasePath)) {
+                    if (processor.processClassAnnotations(request, aCls, annotationValues, apiBasePath, cls.getClassNode().root())) {
                         buildRequest = true;
                     }
                 }

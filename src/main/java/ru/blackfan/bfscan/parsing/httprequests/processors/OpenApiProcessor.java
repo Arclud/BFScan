@@ -89,7 +89,8 @@ public class OpenApiProcessor implements AnnotationProcessor {
     public boolean processClassAnnotations(MultiHTTPRequest request,
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
-            String globalBasePath
+            String globalBasePath,
+            RootNode rn
     ) {
         switch (annotationClass) {
             case Constants.OpenApi.SERVER, Constants.MicroProfileOpenApi.SERVER -> {

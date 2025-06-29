@@ -166,7 +166,8 @@ public class MicronautProcessor implements AnnotationProcessor {
     public boolean processClassAnnotations(MultiHTTPRequest request,
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
-            String globalBasePath) {
+            String globalBasePath,
+            RootNode rn) {
         switch (annotationClass) {
             case Constants.Micronaut.HEADER -> {
                 processHeaderAnnotation(request, annotationValues);

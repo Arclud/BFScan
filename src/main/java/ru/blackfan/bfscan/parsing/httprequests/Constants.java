@@ -157,6 +157,7 @@ public final class Constants {
         public static final String MULTIPART = "Lretrofit2/http/Multipart;";
         public static final String FORM = "Lretrofit2/http/FormUrlEncoded;";
         public static final String PARAM_HEADER = "Lretrofit2/http/Header;";
+        public static final String PARAM_HEADERMAP = "Lretrofit2/http/HeaderMap;";
         public static final String PARAM_PART = "Lretrofit2/http/Part;";
         public static final String PARAM_FIELD = "Lretrofit2/http/Field;";
         public static final String PARAM_BODY = "Lretrofit2/http/Body;";
@@ -186,6 +187,7 @@ public final class Constants {
         public static final String MULTIPART = "Lde/jensklingenberg/ktorfit/http/Multipart;";
         public static final String FORM = "Lde/jensklingenberg/ktorfit/http/FormUrlEncoded;";
         public static final String PARAM_HEADER = "Lde/jensklingenberg/ktorfit/http/Header;";
+        public static final String PARAM_HEADERMAP = "Lde/jensklingenberg/ktorfit/http/HeaderMap;";
         public static final String PARAM_PART = "Lde/jensklingenberg/ktorfit/http/Part;";
         public static final String PARAM_FIELD = "Lde/jensklingenberg/ktorfit/http/Field;";
         public static final String PARAM_BODY = "Lde/jensklingenberg/ktorfit/http/Body;";

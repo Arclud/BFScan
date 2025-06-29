@@ -19,13 +19,17 @@ public class ConfigLoader {
         try (InputStream input = ConfigLoader.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
             if (input == null) {
                 logger.error("Configuration file not found: " + PROPERTIES_FILE);
+                excludedPackages = Arrays.asList("");
+                excludedSecretsRegexp = "";
+                excludedLinksRegexp = "";
+            } else {
+                Properties properties = new Properties();
+                properties.load(input);
+                String packages = properties.getProperty("excluded.packages", "");
+                excludedPackages = Arrays.asList(packages.split(","));
+                excludedSecretsRegexp = properties.getProperty("excluded.secretsRegexp", "");
+                excludedLinksRegexp = properties.getProperty("excluded.linksRegexp", "");
             }
-            Properties properties = new Properties();
-            properties.load(input);
-            String packages = properties.getProperty("excluded.packages", "");
-            excludedPackages = Arrays.asList(packages.split(","));
-            excludedSecretsRegexp = properties.getProperty("excluded.secretsRegexp", "");
-            excludedLinksRegexp = properties.getProperty("excluded.linksRegexp", "");
         } catch (IOException e) {
             logger.error("Error loading configuration file", e);
         }
