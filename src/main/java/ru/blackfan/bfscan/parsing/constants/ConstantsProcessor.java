@@ -7,11 +7,9 @@ import jadx.api.ResourcesLoader;
 import jadx.api.ResourceType;
 import jadx.core.utils.exceptions.JadxException;
 import jadx.core.xmlgen.ResContainer;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
@@ -205,18 +203,9 @@ public class ConstantsProcessor {
                 }
 
                 if (dataType == ResContainer.DataType.TEXT) {
-                    if (resContainer.getText().getCodeStr().length() != 0) {
-                        keyValuePairs.set(processFile(
-                                resFile.getDeobfName(),
-                                new ByteArrayInputStream(resContainer.getText().getCodeStr().getBytes(StandardCharsets.UTF_8)),
-                                searchString));
-                    } else {
-                        if (resFile.getZipEntry() != null) {
-                            keyValuePairs.set(processFile(
-                                        resFile.getDeobfName(), 
-                                        new ByteArrayInputStream(resFile.getZipEntry().getBytes()), 
-                                        searchString));
-                        }
+                    InputStream resourceStream = Helpers.getResourceInputStream(resFile, resContainer);
+                    if (resourceStream != null) {
+                        keyValuePairs.set(processFile(resFile.getDeobfName(), resourceStream, searchString));
                     }
                 }
 

@@ -3,8 +3,12 @@ package ru.blackfan.bfscan.helpers;
 import io.swagger.v3.oas.models.PathItem;
 import jadx.api.plugins.input.data.annotations.EncodedType;
 import jadx.api.plugins.input.data.annotations.EncodedValue;
+import jadx.api.ResourceFile;
+import jadx.api.ResourceType;
 import jadx.core.dex.nodes.ClassNode;
 import jadx.core.dex.nodes.RootNode;
+import jadx.core.xmlgen.ResContainer;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -13,6 +17,7 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -221,5 +226,40 @@ public class Helpers {
         StringWriter writer = new StringWriter();
         transformer.transform(new DOMSource(document), new StreamResult(writer));
         return writer.toString();
+    }
+
+    public static boolean isValidXmlContent(String content) {
+        if (content == null || content.isEmpty()) {
+            return false;
+        }
+        String trimmedContent = content.trim();
+        return trimmedContent.startsWith("<?xml") || trimmedContent.startsWith("<");
+    }
+
+    public static InputStream getResourceInputStream(ResourceFile resFile, ResContainer resContainer) {
+        if (resContainer.getDataType() != ResContainer.DataType.TEXT) {
+            return null;
+        }
+
+        if (resContainer.getText().getCodeStr().length() != 0) {
+            String content = resContainer.getText().getCodeStr();
+            boolean useTextContent = true;
+            
+            if (resFile.getType() == ResourceType.XML) {
+                useTextContent = isValidXmlContent(content);
+            }
+            
+            if (useTextContent) {
+                return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+            } else if (resFile.getZipEntry() != null) {
+                return new ByteArrayInputStream(resFile.getZipEntry().getBytes());
+            }
+        } else {
+            if (resFile.getZipEntry() != null) {
+                return new ByteArrayInputStream(resFile.getZipEntry().getBytes());
+            }
+        }
+        
+        return null;
     }
 }

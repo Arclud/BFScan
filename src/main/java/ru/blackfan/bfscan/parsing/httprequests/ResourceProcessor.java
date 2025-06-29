@@ -6,11 +6,9 @@ import jadx.api.ResourcesLoader;
 import jadx.core.dex.nodes.ClassNode;
 import jadx.core.utils.exceptions.JadxException;
 import jadx.core.xmlgen.ResContainer;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -72,12 +70,9 @@ public class ResourceProcessor {
                     });
                 }
                 if (dataType == ResContainer.DataType.TEXT) {
-                    if (resContainer.getText().getCodeStr().length() != 0) {
-                        multiRequests.addAll(processFile(resFile.getDeobfName(), new ByteArrayInputStream(resContainer.getText().getCodeStr().getBytes(StandardCharsets.UTF_8))));
-                    } else {
-                        if (resFile.getZipEntry() != null) {
-                            multiRequests.addAll(processFile(resFile.getDeobfName(), new ByteArrayInputStream(resFile.getZipEntry().getBytes())));
-                        }
+                    InputStream resourceStream = Helpers.getResourceInputStream(resFile, resContainer);
+                    if (resourceStream != null) {
+                        multiRequests.addAll(processFile(resFile.getDeobfName(), resourceStream));
                     }
                 }
             } catch (JadxException ex) {
