@@ -72,7 +72,7 @@ public class Helpers {
         ClassNode clsNode = root.resolveClass(className);
         if (clsNode != null) {
             clsNode.load();
-            clsNode.reloadCode();
+            clsNode.decompile();
             return clsNode;
         }
         return null;

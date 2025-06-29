@@ -5,6 +5,7 @@ import jadx.api.impl.NoOpCodeCache;
 import jadx.api.impl.SimpleCodeWriter;
 import jadx.api.JadxArgs;
 import jadx.api.JadxDecompiler;
+import jadx.api.impl.InMemoryCodeCache;
 import jadx.plugins.mappings.RenameMappingsOptions;
 import java.io.File;
 import java.io.FileWriter;
@@ -216,7 +217,7 @@ public class Main {
     private static JadxDecompiler initializeJadx(File inputFile, Path mappingPath) {
         JadxArgs jadxArgs = new JadxArgs();
         jadxArgs.setInputFile(inputFile);
-        jadxArgs.setCodeCache(new NoOpCodeCache());
+        jadxArgs.setCodeCache(new InMemoryCodeCache());
         jadxArgs.setReplaceConsts(false);
         jadxArgs.setDebugInfo(true);
         jadxArgs.setPluginLoader(new JadxBasePluginLoader());

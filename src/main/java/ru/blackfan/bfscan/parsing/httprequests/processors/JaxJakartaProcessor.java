@@ -11,7 +11,6 @@ import ru.blackfan.bfscan.helpers.Helpers;
 import ru.blackfan.bfscan.parsing.httprequests.Constants;
 import ru.blackfan.bfscan.parsing.httprequests.MultiHTTPRequest;
 import ru.blackfan.bfscan.parsing.httprequests.ParameterInfo;
-import ru.blackfan.bfscan.parsing.httprequests.ResourceProcessor;
 
 public class JaxJakartaProcessor implements AnnotationProcessor {
 
