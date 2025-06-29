@@ -73,6 +73,7 @@ public class Struts2Processor implements AnnotationProcessor {
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
             String globalBasePath,
+            String className,
             RootNode rn
     ) {
         switch (annotationClass) {

@@ -95,6 +95,7 @@ public class FeignProcessor implements AnnotationProcessor {
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
             String globalBasePath,
+            String className,
             RootNode rn) {
         switch (annotationClass) {
             case Constants.Feign.CLIENT -> {

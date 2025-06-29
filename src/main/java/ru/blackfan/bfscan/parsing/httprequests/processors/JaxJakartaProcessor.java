@@ -122,6 +122,7 @@ public class JaxJakartaProcessor implements AnnotationProcessor {
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
             String globalBasePath,
+            String className,
             RootNode rn) {
         switch (annotationClass) {
             case Constants.JaxRs.PATH, Constants.Jakarta.PATH -> {
@@ -144,7 +145,7 @@ public class JaxJakartaProcessor implements AnnotationProcessor {
                         paths.add(classPath);
                     }
                     request.setPaths(paths);
-                    List<String> httpMethods = AnnotationUtils.extractHttpMethodsFromServletClass(rn, Helpers.classSigToRawFullName(annotationClass));
+                    List<String> httpMethods = AnnotationUtils.extractHttpMethodsFromServletClass(rn, className);
                     if (!httpMethods.isEmpty()) {
                         request.setMethods(httpMethods);
                     }

@@ -30,5 +30,6 @@ public interface AnnotationProcessor {
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
             String globalBasePath,
+            String className,
             RootNode rn);
 }

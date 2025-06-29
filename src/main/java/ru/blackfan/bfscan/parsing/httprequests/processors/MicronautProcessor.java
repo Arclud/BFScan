@@ -167,6 +167,7 @@ public class MicronautProcessor implements AnnotationProcessor {
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
             String globalBasePath,
+            String className,
             RootNode rn) {
         switch (annotationClass) {
             case Constants.Micronaut.HEADER -> {

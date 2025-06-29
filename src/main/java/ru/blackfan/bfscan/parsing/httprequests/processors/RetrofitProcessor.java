@@ -134,6 +134,7 @@ public class RetrofitProcessor implements AnnotationProcessor {
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
             String globalBasePath,
+            String className,
             RootNode rn) {
         return false;
     }

@@ -129,7 +129,6 @@ public class ResourceProcessor {
     private List<MultiHTTPRequest> processXml(String name, InputStream is) {
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
-            //InputSource inputSource = new InputSource(is);
             Document document = builder.parse(is);
             Element root = document.getDocumentElement();
 

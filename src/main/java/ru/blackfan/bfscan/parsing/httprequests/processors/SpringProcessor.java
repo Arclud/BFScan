@@ -123,6 +123,7 @@ public class SpringProcessor implements AnnotationProcessor {
             String annotationClass,
             Map<String, EncodedValue> annotationValues,
             String globalBasePath,
+            String className,
             RootNode rn) {
         switch (annotationClass) {
             case Constants.Spring.REQUEST_MAPPING -> {
