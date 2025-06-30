@@ -17,6 +17,7 @@ Tool for initial processing of APK / XAPK / APKM / DEX / JAR / WAR applications.
 		* [jetty.xml Servlets](https://jetty.org/docs/jetty/12/programming-guide/server/http.html)
 		* [Struts 1](https://weblegacy.github.io/struts1/) & [Struts 2 Actions](https://struts.apache.org/getting-started/coding-actions)
 		* [Swagger](https://docs.swagger.io/swagger-core/v1.5.0/apidocs/) & [OpenApi Annotations](https://docs.swagger.io/swagger-core/v2.2.28/apidocs/)
+		* [Ktor Type-safe routing](https://ktor.io/docs/server-resources.html)
 
 ### Usage
 

@@ -8,13 +8,18 @@ import jadx.core.utils.exceptions.JadxException;
 import jadx.core.xmlgen.ResContainer;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -84,6 +89,12 @@ public class ResourceProcessor {
 
     public List<MultiHTTPRequest> processFile(String name, InputStream is) {
         List<MultiHTTPRequest> multiRequests = new ArrayList<>();
+        
+        if (name.toLowerCase().endsWith("routes")) {
+            multiRequests.addAll(processPlayRoutes(name, is));
+            return multiRequests;
+        }
+        
         switch (Helpers.getFileExtension(name)) {
             case "xml" -> {
                 multiRequests.addAll(processXml(name, is));
@@ -362,5 +373,243 @@ public class ResourceProcessor {
             return nodeList.item(0).getTextContent().trim();
         }
         return "";
+    }
+
+    private List<MultiHTTPRequest> processPlayRoutes(String name, InputStream is) {
+        List<MultiHTTPRequest> multiRequests = new ArrayList<>();
+        
+        Pattern httpMethodPattern = Pattern.compile("^\\s*(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\\s+", Pattern.CASE_INSENSITIVE);
+        
+        Pattern modifierPattern = Pattern.compile("^\\s*\\+\\s*(\\w+)");
+        
+        Pattern includePattern = Pattern.compile("^\\s*->\\s+(\\S+)\\s+(\\S+)");
+        
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+            String line;
+            String currentModifier = null;
+            
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue;
+                }
+                
+                Matcher modifierMatcher = modifierPattern.matcher(line);
+                if (modifierMatcher.find()) {
+                    currentModifier = modifierMatcher.group(1);
+                    continue;
+                }
+                
+                Matcher includeMatcher = includePattern.matcher(line);
+                if (includeMatcher.find()) {
+                    String includePrefix = includeMatcher.group(1);
+                    String includeRouter = includeMatcher.group(2);
+                    
+                    MultiHTTPRequest includeRequest = new MultiHTTPRequest(apiHost, apiBasePath, includeRouter, name);
+                    includeRequest.addAdditionalInformation("Play Framework Included Routes");
+                    includeRequest.setPath(includePrefix, false);
+                    includeRequest.setMethod("GET");
+                    multiRequests.add(includeRequest);
+                    continue;
+                }
+                
+                Matcher httpMethodMatcher = httpMethodPattern.matcher(line);
+                if (httpMethodMatcher.find()) {
+                    String httpMethod = httpMethodMatcher.group(1).toUpperCase();
+                    
+                    String remainingLine = line.substring(httpMethodMatcher.end()).trim();
+                    
+                    String[] parts = remainingLine.split("\\s+", 2);
+                    if (parts.length >= 2) {
+                        String path = parts[0].trim();
+                        String controllerPart = parts[1].trim();
+                        
+                        String controllerAction;
+                        String parametersStr = null;
+                        
+                        int paramStart = controllerPart.indexOf('(');
+                        if (paramStart != -1) {
+                            controllerAction = controllerPart.substring(0, paramStart).trim();
+                            int paramEnd = controllerPart.lastIndexOf(')');
+                            if (paramEnd != -1) {
+                                parametersStr = controllerPart.substring(paramStart + 1, paramEnd).trim();
+                            }
+                        } else {
+                            controllerAction = controllerPart;
+                        }
+                        
+                        MultiHTTPRequest playRequest = new MultiHTTPRequest(apiHost, apiBasePath, controllerAction, name);
+                        playRequest.addAdditionalInformation("Play Framework Route");
+                        playRequest.setMethod(httpMethod);
+                        String normalizedPath = normalizePlayRoutePath(path);
+                        playRequest.setPath(normalizedPath, false);
+                        
+                        if (currentModifier != null) {
+                            playRequest.addAdditionalInformation("Modifier: " + currentModifier);
+                            currentModifier = null;
+                        }
+                        
+                        processPathParameters(playRequest, path);
+                        
+                        if (parametersStr != null && !parametersStr.isEmpty() && !controllerAction.contains("controllers.Assets")) {
+                            processControllerParameters(playRequest, parametersStr);
+                        }
+                        
+                        multiRequests.add(playRequest);
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            logger.error("Error processing Play Framework routes file " + name, ex);
+        }
+        
+        return multiRequests;
+    }
+    
+    private void processPathParameters(MultiHTTPRequest request, String path) {
+        Pattern pathParamPattern = Pattern.compile("([:*])(\\w+)|\\$(\\w+)<([^>]+)>");
+        Matcher matcher = pathParamPattern.matcher(path);
+        
+        while (matcher.find()) {
+            String paramType = matcher.group(1);
+            String paramName = matcher.group(2);
+            String regexParamName = matcher.group(3);
+            String regex = matcher.group(4);
+            
+            if (paramName != null) {
+                if (":".equals(paramType)) {
+                    request.addPathParameter(paramName);
+                } else if ("*".equals(paramType)) {
+                    request.addPathParameter(paramName);
+                }
+            }
+            
+            if (regexParamName != null && regex != null) {
+                request.addPathParameter(regexParamName);
+            }
+        }
+    }
+    
+    private void processControllerParameters(MultiHTTPRequest request, String parametersStr) {
+        if (parametersStr == null || parametersStr.trim().isEmpty()) {
+            return;
+        }
+        
+        List<String> params = splitParameters(parametersStr);
+        
+        for (String param : params) {
+            param = param.trim();
+            if (param.isEmpty()) continue;
+            
+            String paramName;
+            String paramType = "String";
+            Object defaultValue = null;
+            
+            if (param.contains("?=")) {
+                String[] parts = param.split("\\?=", 2);
+                String leftPart = parts[0].trim();
+                String rightPart = parts[1].trim();
+                
+                if (rightPart.startsWith("\"") && rightPart.endsWith("\"")) {
+                    rightPart = rightPart.substring(1, rightPart.length() - 1);
+                }
+                defaultValue = rightPart;
+                
+                if (leftPart.contains(":")) {
+                    String[] typeParts = leftPart.split(":", 2);
+                    paramName = typeParts[0].trim();
+                    paramType = typeParts[1].trim();
+                } else {
+                    paramName = leftPart;
+                }
+            }
+            else if (param.contains("=")) {
+                String[] nameValue = param.split("=", 2);
+                paramName = nameValue[0].trim();
+                String value = nameValue[1].trim();
+                
+                if (value.startsWith("\"") && value.endsWith("\"")) {
+                    value = value.substring(1, value.length() - 1);
+                }
+                defaultValue = value;
+            }
+            else if (param.contains(":")) {
+                String[] parts = param.split(":", 2);
+                paramName = parts[0].trim();
+                paramType = parts[1].trim();
+                defaultValue = getDefaultValueForType(paramType);
+            }
+            else {
+                paramName = param;
+                defaultValue = getDefaultValueForType(paramType);
+            }
+            
+            if (!request.getPathParameters().contains(paramName) && defaultValue != null) {
+                request.putQueryParameter(paramName, defaultValue.toString());
+            }
+        }
+    }
+    
+    private List<String> splitParameters(String parametersStr) {
+        List<String> params = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        int depth = 0;
+        boolean inQuotes = false;
+        
+        for (char c : parametersStr.toCharArray()) {
+            if (c == '"') {
+                inQuotes = !inQuotes;
+                current.append(c);
+            } else if (!inQuotes) {
+                if (c == '(' || c == '[' || c == '{') {
+                    depth++;
+                    current.append(c);
+                } else if (c == ')' || c == ']' || c == '}') {
+                    depth--;
+                    current.append(c);
+                } else if (c == ',' && depth == 0) {
+                    params.add(current.toString().trim());
+                    current = new StringBuilder();
+                } else {
+                    current.append(c);
+                }
+            } else {
+                current.append(c);
+            }
+        }
+        
+        if (current.length() > 0) {
+            params.add(current.toString().trim());
+        }
+        
+        return params;
+    }
+    
+    private Object getDefaultValueForType(String paramType) {
+        paramType = paramType.toLowerCase().trim();
+        return switch (paramType) {
+            case "string" -> "example_string";
+            case "int", "integer" -> 1;
+            case "long" -> 1L;
+            case "boolean", "bool" -> false;
+            case "double" -> 1.0;
+            case "float" -> 1.0f;
+            case "request" -> null;
+            default -> paramType.contains("request") ? null : "value";
+        };
+    }
+    
+    private String normalizePlayRoutePath(String path) {
+        if (path == null || path.isEmpty()) {
+            return path;
+        }
+        
+        String normalizedPath = path;
+        normalizedPath = normalizedPath.replaceAll(":(\\w+)", "{$1}");
+        normalizedPath = normalizedPath.replaceAll("\\*(\\w+)", "{$1}");
+        normalizedPath = normalizedPath.replaceAll("\\$(\\w+)<[^>]+>", "{$1}");
+        
+        return normalizedPath;
     }
 }

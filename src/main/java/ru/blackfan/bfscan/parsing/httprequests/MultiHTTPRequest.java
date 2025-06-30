@@ -221,4 +221,11 @@ public class MultiHTTPRequest {
     public List<HTTPRequest> getRequests() {
         return this.requests;
     }
+
+    public List<String> getPathParameters() {
+        if (!requests.isEmpty()) {
+            return requests.get(0).pathParams;
+        }
+        return new ArrayList<>();
+    }
 }
