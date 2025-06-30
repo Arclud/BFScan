@@ -246,7 +246,7 @@ public class Helpers {
             boolean useTextContent = true;
             
             if (resFile.getType() == ResourceType.XML) {
-                useTextContent = isValidXmlContent(content);
+                useTextContent = false;
             }
             
             if (useTextContent) {

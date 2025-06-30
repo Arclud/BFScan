@@ -14,6 +14,7 @@ public class AnnotationProcessorFactory {
         processors.add(new FeignProcessor());
         processors.add(new Struts2Processor());
         processors.add(new RetrofitProcessor());
+        processors.add(new KtorResourceProcessor());
         processors.add(new CommonProcessor());
         processors.add(new OpenApiProcessor());
     }

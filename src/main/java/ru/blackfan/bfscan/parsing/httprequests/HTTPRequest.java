@@ -127,7 +127,7 @@ class HTTPRequest {
         }
 
         for (String pathParam : pathParams) {
-            if (pathParam != null && path.contains("{" + pathParam + "}")) {
+            if (pathParam != null && fullPath.contains("{" + pathParam + "}")) {
                 operation.addParametersItem(
                         new Parameter()
                                 .name(pathParam)
@@ -139,7 +139,7 @@ class HTTPRequest {
         }
 
         Pattern pattern = Pattern.compile("\\{(\\w+)}");
-        Matcher matcher = pattern.matcher(path);
+        Matcher matcher = pattern.matcher(fullPath);
         while (matcher.find()) {
             String paramName = matcher.group(1);
             if (!pathParams.contains(paramName)) {
@@ -298,7 +298,7 @@ class HTTPRequest {
         if (!basePath.startsWith("/")) {
             basePath = "/" + basePath;
         }
-        if (!basePath.endsWith("/")) {
+        if (!basePath.endsWith("/") && !path.isEmpty()) {
             basePath = basePath + "/";
         }
         return (path.startsWith("/") ? basePath.substring(0, basePath.length() - 1) : basePath) + path;

@@ -11,6 +11,20 @@ public final class Constants {
     private Constants() {
     }
 
+    public static final class Ktor {
+
+        private Ktor() {
+        }
+
+        public static final String RESOURCE = "Lio/ktor/server/resources/Resource;";
+        public static final String RESOURCE2 = "Lio/ktor/resources/Resource;";
+        public static final String LOCATION = "Lio/ktor/locations/Location;";
+
+        public static final List<String> REQUEST_METHODS = Collections.unmodifiableList(Arrays.asList(
+                RESOURCE, RESOURCE2, LOCATION
+        ));
+    }
+
     public static final class MicroProfileOpenApi {
 
         private MicroProfileOpenApi() {
@@ -359,7 +373,7 @@ public final class Constants {
                     Struts.REQUEST_METHODS, Retrofit.REQUEST_METHODS, Ktorfit.REQUEST_METHODS,
                     JaxRs.REQUEST_METHODS, Jakarta.REQUEST_METHODS, Micronaut.REQUEST_METHODS,
                     Spring.REQUEST_METHODS, Feign.REQUEST_METHODS, Swagger.REQUEST_METHODS,
-                    OpenApi.REQUEST_METHODS, MicroProfileOpenApi.REQUEST_METHODS
+                    OpenApi.REQUEST_METHODS, MicroProfileOpenApi.REQUEST_METHODS, Ktor.REQUEST_METHODS
             ).flatMap(List::stream).collect(Collectors.toList())
     );
 
